@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from analysis import (
     load_data, preprocess, calculate_performance_score,
+    apply_kmeans_clustering, apply_sentiment_to_reviews,
     verify_discount, seller_trust_analysis, category_statistics,
     price_history, product_sentiment_summary
 )
@@ -44,8 +45,10 @@ PLOTLY_THEME = dict(
 def get_data():
     products, sellers, reviews, prices = load_data()
     products, sellers = preprocess(products, sellers)
+    reviews = apply_sentiment_to_reviews(reviews)
     scored = calculate_performance_score(products, sellers)
-    discounted = verify_discount(scored)
+    clustered = apply_kmeans_clustering(scored)
+    discounted = verify_discount(clustered)
     seller_trust = seller_trust_analysis(sellers, reviews)
     cat_stats = category_statistics(products)
     return discounted, seller_trust, cat_stats, prices, reviews
@@ -101,6 +104,9 @@ with tab1:
         "rating": "Puan", "performance_score": "Skor", "cluster_label": "Etiket", "discount_verdict": "İndirim"
     })
     st.dataframe(top, use_container_width=True, hide_index=True)
+
+    csv = top.to_csv(index=False).encode("utf-8")
+    st.download_button("📥 CSV olarak indir", csv, "top_products.csv", "text/csv")
 
 # ── ÜRÜN DETAY ─────────────────────────────────────────────────────────────────
 with tab2:

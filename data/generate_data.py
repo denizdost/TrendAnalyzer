@@ -13,6 +13,43 @@ sellers = [
                                "StylePoint", "HomeFirst", "FitLife"], 1)
 ]
 
+POSITIVE_REVIEWS = [
+    "Ürün gerçekten çok iyi, tavsiye ederim.",
+    "Harika bir ürün, kalitesi mükemmel.",
+    "Çok memnun kaldım, hızlı kargo.",
+    "Güzel ve şık, tam istediğim gibiydi.",
+    "Kaliteli ürün, fiyatına göre çok değer.",
+    "Süper ürün, herkese tavsiye ederim.",
+    "Beğendim, sağlam ve kaliteli.",
+    "Mükemmeldi, teşekkürler.",
+    "Ürün tam açıklandığı gibi, memnunum.",
+    "İdeal bir alışveriş, çok rahat.",
+]
+NEGATIVE_REVIEWS = [
+    "Kötü kalite, beklentimi karşılamadı.",
+    "Berbat bir ürün, çöp gibi.",
+    "Aldatmaca, sahte indirim.",
+    "Bozuk geldi, iade ettim.",
+    "Kalitesiz, kesinlikle tavsiye etmem.",
+    "Hayal kırıklığı, pişman oldum.",
+    "Geç geldi ve hasarlıydı.",
+    "Ürün yanlış, sorun yaşadım.",
+    "Çok kötü, dolandırıcılık gibi.",
+    "Beğenmedim, para israfı.",
+]
+NEUTRAL_REVIEWS = [
+    "Fena değil ama daha iyi olabilirdi.",
+    "Ortalama bir ürün.",
+    "İdare eder.",
+    "Ne iyi ne kötü.",
+    "Beklediğim gibi çıktı.",
+    "Normal, ekstra bir şey yok.",
+    "Kullanılabilir durumda.",
+    "Fiyatına uygun.",
+    "Standart bir ürün.",
+    "Sorun yaşamadım.",
+]
+
 products = []
 for i in range(1, 201):
     cat = random.choice(categories)
@@ -41,18 +78,25 @@ for i in range(1, 201):
     })
 
 reviews = []
-sentiments = ["Pozitif", "Negatif", "Nötr"]
-weights = [0.55, 0.20, 0.25]
 for i, p in enumerate(products):
-    for j in range(random.randint(2, 8)):
-        sentiment = random.choices(sentiments, weights)[0]
+    for j in range(random.randint(3, 8)):
+        sentiment_choice = random.choices(
+            ["Pozitif", "Negatif", "Nötr"],
+            weights=[0.55, 0.20, 0.25]
+        )[0]
+        if sentiment_choice == "Pozitif":
+            text = random.choice(POSITIVE_REVIEWS)
+        elif sentiment_choice == "Negatif":
+            text = random.choice(NEGATIVE_REVIEWS)
+        else:
+            text = random.choice(NEUTRAL_REVIEWS)
         reviews.append({
             "review_id": f"R{i*10+j:04d}",
             "product_id": p["product_id"],
             "seller_id": p["seller_id"],
             "rating": p["rating"] + random.uniform(-0.5, 0.5),
-            "sentiment": sentiment,
-            "text": f"Örnek yorum {j+1}",
+            "sentiment": sentiment_choice,
+            "text": text,
         })
 
 prices = []

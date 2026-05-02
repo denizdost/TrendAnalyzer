@@ -1,10 +1,25 @@
 import pandas as pd
 import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 DISCOUNT_FAKE_THRESHOLD = 0.15
-SELLER_TRUST_MIN_SALES = 500
 BEST_BUY_SCORE_THRESHOLD = 70
 FAIR_SCORE_THRESHOLD = 40
+
+# Simple Turkish sentiment word lists
+POSITIVE_WORDS = [
+    "iyi", "güzel", "harika", "mükemmel", "süper", "kaliteli", "beğendim",
+    "memnun", "tavsiye", "sevdim", "hızlı", "sağlam", "şık", "başarılı",
+    "kusursuz", "muhteşem", "teşekkür", "aldım", "aldik", "ideal", "rahat",
+    "ucuz", "uygun", "değer", "gerçek", "doğru", "tam", "mükemmeldi"
+]
+NEGATIVE_WORDS = [
+    "kötü", "berbat", "rezalet", "bozuk", "sahte", "yalan", "aldatmaca",
+    "kalitesiz", "beğenmedim", "iade", "şikayet", "geç", "gelmedi", "kırık",
+    "işe yaramaz", "pişman", "dolandırıcı", "çöp", "sorun", "hata", "eksik",
+    "yanlış", "hayal kırıklığı", "tavsiye etmem", "aldatıldım", "sahte"
+]
 
 
 def load_data():
@@ -27,8 +42,32 @@ def preprocess(products, sellers):
     return products, sellers
 
 
+def analyze_sentiment(text):
+    """Rule-based Turkish sentiment analysis."""
+    if not isinstance(text, str):
+        return "Nötr"
+    text_lower = text.lower()
+    pos_score = sum(1 for w in POSITIVE_WORDS if w in text_lower)
+    neg_score = sum(1 for w in NEGATIVE_WORDS if w in text_lower)
+    if pos_score > neg_score:
+        return "Pozitif"
+    elif neg_score > pos_score:
+        return "Negatif"
+    else:
+        return "Nötr"
+
+
+def apply_sentiment_to_reviews(reviews):
+    """Apply sentiment analysis to all reviews."""
+    reviews = reviews.copy()
+    reviews["sentiment"] = reviews["text"].apply(analyze_sentiment)
+    return reviews
+
+
 def calculate_performance_score(products, sellers):
-    sellers_renamed = sellers.rename(columns={"name": "seller_name", "rating": "seller_rating"})
+    sellers_renamed = sellers.rename(
+        columns={"name": "seller_name", "rating": "seller_rating"}
+    )
     merged = products.merge(sellers_renamed, on="seller_id", how="left")
 
     merged["rating_score"] = (merged["rating"] / 5.0) * 40
@@ -39,17 +78,37 @@ def calculate_performance_score(products, sellers):
     merged["performance_score"] = (
         merged["rating_score"] + merged["review_score"] + merged["trust_score"]
     ).round(1)
-
-    def label(score):
-        if score >= BEST_BUY_SCORE_THRESHOLD:
-            return "🏆 Best Buy"
-        elif score >= FAIR_SCORE_THRESHOLD:
-            return "✅ Fair Value"
-        else:
-            return "⚠️ Overpriced"
-
-    merged["cluster_label"] = merged["performance_score"].apply(label)
     return merged
+
+
+def apply_kmeans_clustering(scored):
+    """Real KMeans clustering on price, performance_score, review_count."""
+    df = scored.copy()
+    features = df[["discounted_price", "performance_score", "review_count"]].copy()
+
+    scaler = StandardScaler()
+    scaled = scaler.fit_transform(features)
+
+    kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
+    df["cluster"] = kmeans.fit_predict(scaled)
+
+    # Map clusters to labels based on centroid performance score
+    centroids = pd.DataFrame(
+        scaler.inverse_transform(kmeans.cluster_centers_),
+        columns=["discounted_price", "performance_score", "review_count"]
+    )
+    sorted_clusters = centroids["performance_score"].rank(ascending=False)
+    label_map = {}
+    for cluster_id, rank in sorted_clusters.items():
+        if rank == 1:
+            label_map[cluster_id] = "🏆 Best Buy"
+        elif rank == 2:
+            label_map[cluster_id] = "✅ Fair Value"
+        else:
+            label_map[cluster_id] = "⚠️ Overpriced"
+
+    df["cluster_label"] = df["cluster"].map(label_map)
+    return df
 
 
 def verify_discount(products):
