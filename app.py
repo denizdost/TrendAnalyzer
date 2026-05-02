@@ -400,9 +400,9 @@ with tab2:
             metric_card("Total Reviews", f"{total_reviews}", "orange")
 
             if total_reviews > 0:
-                pos = sentiment_counts["Positive"]
-                neg = sentiment_counts["Negative"]
-                neu = sentiment_counts["Neutral"]
+                pos = sentiment_counts.get("Pozitif", sentiment_counts.get("Positive", 0))
+                neg = sentiment_counts.get("Negatif", sentiment_counts.get("Negative", 0))
+                neu = sentiment_counts.get("Nötr", sentiment_counts.get("Neutral", 0))
                 pos_pct = pos / total_reviews * 100
                 neg_pct = neg / total_reviews * 100
                 neu_pct = neu / total_reviews * 100
