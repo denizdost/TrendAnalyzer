@@ -185,6 +185,61 @@ with tab2:
         with col2: metric_card("Gerçek İndirim", f"%{prod['real_discount_rate']*100:.0f}", "green")
         with col3: metric_card("Sonuç", prod['discount_verdict'], "blue")
 
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown('<div class="section-title">🤖 Canlı BERT Sentiment Analizi</div>', unsafe_allow_html=True)
+        st.markdown('''
+        <div style="background:#161616;border:1px solid #222;border-radius:12px;padding:1rem 1.4rem;margin-bottom:1rem;">
+            <div style="font-size:0.75rem;color:#555;margin-bottom:0.5rem;">
+                Model: <span style="color:#ff6b35;">savasy/bert-base-turkish-sentiment-cased</span> 
+                &nbsp;·&nbsp; HuggingFace Transformers &nbsp;·&nbsp; Fine-tuned on Turkish reviews
+            </div>
+            <div style="font-size:0.82rem;color:#888;">
+                Kendi yorumunuzu yazın, BERT modeli gerçek zamanlı olarak analiz etsin.
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
+
+        user_review = st.text_area("Yorum yazın...", placeholder="Örn: Ürün çok kaliteliydi, kesinlikle tavsiye ederim.", height=80, label_visibility="collapsed")
+
+        if st.button("🔍 BERT ile Analiz Et", type="primary"):
+            if user_review.strip():
+                with st.spinner("BERT modeli analiz ediyor..."):
+                    try:
+                        from transformers import pipeline
+                        bert = pipeline("text-classification", model="savasy/bert-base-turkish-sentiment-cased")
+                        result = bert(user_review[:512])[0]
+                        label = result["label"]
+                        score = result["score"]
+
+                        if label == "positive":
+                            emoji, color, tc, verdict = "😊", "#052e16", "#4ade80", "Pozitif"
+                        elif label == "negative":
+                            emoji, color, tc, verdict = "😞", "#1c0505", "#f87171", "Negatif"
+                        else:
+                            emoji, color, tc, verdict = "😐", "#1c1100", "#facc15", "Nötr"
+
+                        st.markdown(f'''
+                        <div style="background:{color};border-radius:10px;padding:1rem 1.4rem;margin-top:0.5rem;">
+                            <div style="font-family:Syne,sans-serif;font-size:1.4rem;font-weight:700;color:{tc};">{emoji} {verdict}</div>
+                            <div style="font-size:0.8rem;color:{tc};opacity:0.8;margin-top:4px;">Güven skoru: %{score*100:.1f}</div>
+                        </div>
+                        ''', unsafe_allow_html=True)
+                    except Exception as e:
+                        # Fallback to rule-based if BERT fails
+                        from analysis import analyze_sentiment
+                        verdict = analyze_sentiment(user_review)
+                        emoji = "😊" if verdict == "Pozitif" else "😞" if verdict == "Negatif" else "😐"
+                        color = "#052e16" if verdict == "Pozitif" else "#1c0505" if verdict == "Negatif" else "#1c1100"
+                        tc = "#4ade80" if verdict == "Pozitif" else "#f87171" if verdict == "Negatif" else "#facc15"
+                        st.markdown(f'''
+                        <div style="background:{color};border-radius:10px;padding:1rem 1.4rem;margin-top:0.5rem;">
+                            <div style="font-family:Syne,sans-serif;font-size:1.4rem;font-weight:700;color:{tc};">{emoji} {verdict}</div>
+                            <div style="font-size:0.8rem;color:{tc};opacity:0.8;margin-top:4px;">Kural tabanlı analiz (BERT yüklenemedi)</div>
+                        </div>
+                        ''', unsafe_allow_html=True)
+            else:
+                st.warning("Lütfen bir yorum yazın.")
+
 # ── İNDİRİM DOĞRULAMA ─────────────────────────────────────────────────────────
 with tab3:
     st.markdown('<div class="page-title">İndirim Doğrulama</div>', unsafe_allow_html=True)

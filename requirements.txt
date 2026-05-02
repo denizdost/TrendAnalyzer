@@ -5,3 +5,5 @@ plotly
 coverage
 flake8
 scikit-learn
+transformers
+torch
