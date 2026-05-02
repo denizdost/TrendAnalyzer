@@ -8,7 +8,7 @@ from analysis import (
     price_history, product_sentiment_summary
 )
 
-st.set_page_config(page_title="TrendAnalyzer", page_icon="📊", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="TrendAnalyzer", page_icon="📊", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
 <style>
@@ -55,19 +55,45 @@ df, seller_df, cat_df, prices_df, reviews_df = get_data()
 def metric_card(label, value, color="orange"):
     st.markdown(f'<div class="metric-card"><div class="metric-label">{label}</div><div class="metric-value {color}">{value}</div></div>', unsafe_allow_html=True)
 
-# Sidebar
-with st.sidebar:
-    st.markdown('<div style="padding:1rem 0 1.5rem 0;"><div style="font-family:Syne,sans-serif;font-size:clamp(0.9rem,1.8vw,1.3rem);font-weight:800;color:#ff6b35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📊 TrendAnalyzer</div><div style="font-size:0.72rem;color:#444;margin-top:2px;white-space:nowrap;">Trendyol Ürün Analizi</div></div>', unsafe_allow_html=True)
-    page = st.radio("Nav", ["🏠  Dashboard", "🔍  Ürün Detay", "💰  İndirim Doğrulama", "🏪  Satıcı Güven", "📈  Kategori İstatistikleri"], label_visibility="collapsed")
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown('<div style="font-size:0.72rem;color:#444;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Filtreler</div>', unsafe_allow_html=True)
-    selected_cats = st.multiselect("Kategori", options=sorted(df["category"].unique()), default=[], placeholder="Tümü")
-    price_range = st.slider("Fiyat Aralığı (₺)", 0, int(df["discounted_price"].max()), (0, int(df["discounted_price"].max())))
-    filtered = df.copy()
-    if selected_cats:
-        filtered = filtered[filtered["category"].isin(selected_cats)]
-    filtered = filtered[(filtered["discounted_price"] >= price_range[0]) & (filtered["discounted_price"] <= price_range[1])]
-    st.markdown(f'<div style="font-size:0.75rem;color:#555;margin-top:8px;">{len(filtered)} ürün gösteriliyor</div>', unsafe_allow_html=True)
+# Top navbar
+st.markdown('''
+<div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0 1.2rem 0;border-bottom:1px solid #1e1e1e;margin-bottom:1.2rem;">
+    <div style="font-family:Syne,sans-serif;font-size:1.4rem;font-weight:800;color:#ff6b35;white-space:nowrap;">📊 TrendAnalyzer</div>
+    <div style="font-size:0.72rem;color:#444;">Trendyol Ürün Analizi</div>
+</div>
+''', unsafe_allow_html=True)
+
+col_nav1, col_nav2, col_nav3, col_nav4, col_nav5 = st.columns(5)
+pages = ["🏠  Dashboard", "🔍  Ürün Detay", "💰  İndirim Doğrulama", "🏪  Satıcı Güven", "📈  Kategori İstatistikleri"]
+if "page" not in st.session_state:
+    st.session_state.page = pages[0]
+
+for col, p in zip([col_nav1, col_nav2, col_nav3, col_nav4, col_nav5], pages):
+    with col:
+        active = st.session_state.page == p
+        if st.button(p, use_container_width=True, type="primary" if active else "secondary"):
+            st.session_state.page = p
+            st.rerun()
+
+page = st.session_state.page
+
+st.markdown("<hr>", unsafe_allow_html=True)
+
+# Filters row
+fc1, fc2, fc3 = st.columns([2, 3, 1])
+with fc1:
+    selected_cats = st.multiselect("Kategori", options=sorted(df["category"].unique()), default=[], placeholder="Tümü", label_visibility="collapsed")
+with fc2:
+    price_range = st.slider("Fiyat", 0, int(df["discounted_price"].max()), (0, int(df["discounted_price"].max())), label_visibility="collapsed")
+with fc3:
+    st.markdown(f'<div style="font-size:0.75rem;color:#555;padding-top:0.5rem;">{len(df)} ürün</div>', unsafe_allow_html=True)
+
+filtered = df.copy()
+if selected_cats:
+    filtered = filtered[filtered["category"].isin(selected_cats)]
+filtered = filtered[(filtered["discounted_price"] >= price_range[0]) & (filtered["discounted_price"] <= price_range[1])]
+
+st.markdown("<div style='margin-bottom:1rem;'></div>", unsafe_allow_html=True)
 
 # ── DASHBOARD ──────────────────────────────────────────────────────────────────
 if page == "🏠  Dashboard":
