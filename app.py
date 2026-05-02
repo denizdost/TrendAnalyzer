@@ -55,51 +55,28 @@ df, seller_df, cat_df, prices_df, reviews_df = get_data()
 def metric_card(label, value, color="orange"):
     st.markdown(f'<div class="metric-card"><div class="metric-label">{label}</div><div class="metric-value {color}">{value}</div></div>', unsafe_allow_html=True)
 
-# Top navbar
-pages = ["Dashboard", "Ürün Detay", "İndirim Doğrulama", "Satıcı Güven", "Kategori İstatistikleri"]
-if "page" not in st.session_state:
-    st.session_state.page = pages[0]
+# Header
+st.markdown('<div style="font-family:Syne,sans-serif;font-size:1.4rem;font-weight:800;color:#ff6b35;padding-bottom:0.8rem;white-space:nowrap;">📊 TrendAnalyzer</div>', unsafe_allow_html=True)
 
-# Nav row: logo + buttons + filters all in one line
-nav_cols = st.columns([2, 1, 1, 1.4, 1, 1.6, 0.1, 2.5, 3])
-with nav_cols[0]:
-    st.markdown('<div style="font-family:Syne,sans-serif;font-size:1.3rem;font-weight:800;color:#ff6b35;padding-top:4px;white-space:nowrap;">📊 TrendAnalyzer</div>', unsafe_allow_html=True)
-
-for i, (col, p) in enumerate(zip(nav_cols[1:6], pages)):
-    with col:
-        active = st.session_state.page == p
-        btn_style = f"""
-        <style>
-        div[data-testid="stButton"] button {{
-            border-radius: 6px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.78rem;
-            font-weight: 500;
-            padding: 4px 10px;
-            height: 32px;
-            white-space: nowrap;
-        }}
-        </style>"""
-        if st.button(p, key=f"nav_{i}", use_container_width=True, type="primary" if active else "secondary"):
-            st.session_state.page = p
-            st.rerun()
-
-with nav_cols[7]:
-    selected_cats = st.multiselect("k", options=sorted(df["category"].unique()), default=[], placeholder="Kategori", label_visibility="collapsed")
-with nav_cols[8]:
+# Filters
+fc1, fc2 = st.columns([2, 4])
+with fc1:
+    selected_cats = st.multiselect("k", options=sorted(df["category"].unique()), default=[], placeholder="Kategori filtrele...", label_visibility="collapsed")
+with fc2:
     price_range = st.slider("f", 0, int(df["discounted_price"].max()), (0, int(df["discounted_price"].max())), label_visibility="collapsed")
-
-page = st.session_state.page
-
-st.markdown("<hr style='margin:0.5rem 0 1.2rem 0;'>", unsafe_allow_html=True)
 
 filtered = df.copy()
 if selected_cats:
     filtered = filtered[filtered["category"].isin(selected_cats)]
 filtered = filtered[(filtered["discounted_price"] >= price_range[0]) & (filtered["discounted_price"] <= price_range[1])]
 
+st.markdown("<hr style='margin:0.5rem 0 0 0;'>", unsafe_allow_html=True)
+
+# Tabs navigation
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Dashboard", "Ürün Detay", "İndirim Doğrulama", "Satıcı Güven", "Kategori İstatistikleri"])
+
 # ── DASHBOARD ──────────────────────────────────────────────────────────────────
-if page == "Dashboard":
+with tab1:
     st.markdown('<div class="page-title">Dashboard</div>', unsafe_allow_html=True)
     st.markdown('<div class="page-subtitle">Genel pazar özeti</div>', unsafe_allow_html=True)
 
@@ -136,7 +113,7 @@ if page == "Dashboard":
     st.dataframe(top, use_container_width=True, hide_index=True)
 
 # ── ÜRÜN DETAY ─────────────────────────────────────────────────────────────────
-elif page == "Ürün Detay":
+with tab2:
     st.markdown('<div class="page-title">Ürün Detay Analizi</div>', unsafe_allow_html=True)
     st.markdown('<div class="page-subtitle">Ürün bazlı fiyat geçmişi ve yorum sentiment analizi</div>', unsafe_allow_html=True)
 
@@ -213,7 +190,7 @@ elif page == "Ürün Detay":
         with col3: metric_card("Sonuç", prod['discount_verdict'], "blue")
 
 # ── İNDİRİM DOĞRULAMA ─────────────────────────────────────────────────────────
-elif page == "İndirim Doğrulama":
+with tab3:
     st.markdown('<div class="page-title">İndirim Doğrulama</div>', unsafe_allow_html=True)
     st.markdown('<div class="page-subtitle">Gerçek ve yanıltıcı indirimleri karşılaştır</div>', unsafe_allow_html=True)
 
@@ -282,7 +259,7 @@ elif page == "İndirim Doğrulama":
     st.dataframe(show_df, use_container_width=True, hide_index=True)
 
 # ── SATICI GÜVEN ───────────────────────────────────────────────────────────────
-elif page == "Satıcı Güven":
+with tab4:
     st.markdown('<div class="page-title">Satıcı Güven Analizi</div>', unsafe_allow_html=True)
     st.markdown('<div class="page-subtitle">Satıcı puanları ve müşteri memnuniyeti</div>', unsafe_allow_html=True)
 
@@ -367,7 +344,7 @@ elif page == "Satıcı Güven":
     st.dataframe(show_sellers, use_container_width=True, hide_index=True)
 
 # ── KATEGORİ ──────────────────────────────────────────────────────────────────
-elif page == "Kategori İstatistikleri":
+with tab5:
     st.markdown('<div class="page-title">Kategori İstatistikleri</div>', unsafe_allow_html=True)
     st.markdown('<div class="page-subtitle">Kategori bazlı piyasa analizi</div>', unsafe_allow_html=True)
 
