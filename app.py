@@ -274,7 +274,7 @@ elif page == "🏪  Satıcı Güven":
 
     if selected_s:
         s = seller_df[seller_df["seller_id"] == selected_s].iloc[0]
-        s = seller_results[seller_results["seller_id"] == selected_s].iloc[0]
+        s = seller_df[seller_df["seller_id"] == selected_s].iloc[0]
 
         col1, col2, col3, col4 = st.columns(4)
         with col1: metric_card("Satıcı Puanı", f"{s['rating']} ⭐", "yellow")
