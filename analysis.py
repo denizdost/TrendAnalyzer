@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-DISCOUNT_FAKE_THRESHOLD = 0.15  # real discount must be at least 15% of claimed
+DISCOUNT_FAKE_THRESHOLD = 0.15
 SELLER_TRUST_MIN_SALES = 500
 BEST_BUY_SCORE_THRESHOLD = 70
 FAIR_SCORE_THRESHOLD = 40
@@ -16,7 +16,6 @@ def load_data():
 
 
 def preprocess(products, sellers):
-    # Remove outliers using IQR on discounted_price
     Q1 = products["discounted_price"].quantile(0.25)
     Q3 = products["discounted_price"].quantile(0.75)
     IQR = Q3 - Q1
@@ -29,20 +28,12 @@ def preprocess(products, sellers):
 
 
 def calculate_performance_score(products, sellers):
-    """Compute 0-100 performance score per product."""
-    merged = products.merge(sellers, on="seller_id", how="left")
+    sellers_renamed = sellers.rename(columns={"name": "seller_name", "rating": "seller_rating"})
+    merged = products.merge(sellers_renamed, on="seller_id", how="left")
 
-    # Rename to avoid collision after merge
-    merged = merged.rename(columns={"rating_x": "rating", "rating_y": "seller_rating"})
-
-    # Normalize rating (0-5 → 0-40 pts)
     merged["rating_score"] = (merged["rating"] / 5.0) * 40
-
-    # Normalize review_count (log scale → 0-30 pts)
     max_log = np.log1p(merged["review_count"].max())
     merged["review_score"] = (np.log1p(merged["review_count"]) / max_log) * 30
-
-    # Seller trust contribution (0-30 pts)
     merged["trust_score"] = (merged["seller_rating"] / 5.0) * 30
 
     merged["performance_score"] = (
@@ -62,19 +53,17 @@ def calculate_performance_score(products, sellers):
 
 
 def verify_discount(products):
-    """Flag fake discounts where real discount is much lower than claimed."""
     df = products.copy()
     df["discount_gap"] = df["claimed_discount_rate"] - df["real_discount_rate"]
     df["is_fake_discount"] = df["discount_gap"] > DISCOUNT_FAKE_THRESHOLD
     df["discount_verdict"] = df["is_fake_discount"].map({
-        True: "❌ Yanıltıcı İndirim",
-        False: "✅ Gerçek İndirim"
+        True: "❌ Yanıltıcı",
+        False: "✅ Gerçek"
     })
     return df
 
 
 def seller_trust_analysis(sellers, reviews):
-    """Compute trust score per seller based on rating + sentiment."""
     sentiment_scores = reviews.groupby("seller_id").apply(
         lambda x: (x["sentiment"] == "Pozitif").sum() / len(x) * 100
     ).reset_index(name="positive_rate")
@@ -100,7 +89,6 @@ def seller_trust_analysis(sellers, reviews):
 
 
 def category_statistics(products):
-    """Return mean, median, std per category."""
     return products.groupby("category").agg(
         avg_price=("discounted_price", "mean"),
         median_price=("discounted_price", "median"),
@@ -112,3 +100,14 @@ def category_statistics(products):
 
 def price_history(prices, product_id):
     return prices[prices["product_id"] == product_id].sort_values("month")
+
+
+def product_sentiment_summary(reviews, product_id):
+    prod_reviews = reviews[reviews["product_id"] == product_id]
+    if len(prod_reviews) == 0:
+        return {"Pozitif": 0, "Negatif": 0, "Nötr": 0}, 0
+    counts = prod_reviews["sentiment"].value_counts()
+    result = {"Pozitif": 0, "Negatif": 0, "Nötr": 0}
+    for k in result:
+        result[k] = int(counts.get(k, 0))
+    return result, len(prod_reviews)
