@@ -111,16 +111,16 @@ elif page == "🔍  Ürün Detay":
     st.markdown('<div class="page-title">Ürün Detay Analizi</div>', unsafe_allow_html=True)
     st.markdown('<div class="page-subtitle">Ürün bazlı fiyat geçmişi ve yorum sentiment analizi</div>', unsafe_allow_html=True)
 
-    # Search bar - single searchable selectbox
-    all_names = filtered.set_index("product_id")["name"].to_dict()
-    selected_pid = st.selectbox(
-        "🔍 Ürün ara...",
-        options=list(all_names.keys()),
-        format_func=lambda x: all_names.get(x, x),
-        index=0,
-        placeholder="Ürün adı yazın...",
-        label_visibility="collapsed"
-    )
+    # Search bar
+    q = st.text_input("🔍 Ürün Ara", placeholder="Ürün adı yazın...", label_visibility="collapsed", key="prod_search")
+    matches = filtered[filtered["name"].str.contains(q, case=False, na=False)] if q else filtered
+    name_list = matches["name"].tolist()
+    pid_list = matches["product_id"].tolist()
+    if len(name_list) == 0:
+        st.warning("Eşleşen ürün bulunamadı.")
+        selected_pid = None
+    else:
+        selected_pid = pid_list[name_list.index(st.selectbox("", name_list, label_visibility="collapsed", key="prod_select"))]
 
     if selected_pid:
         prod = filtered[filtered["product_id"] == selected_pid].iloc[0]
@@ -203,14 +203,13 @@ elif page == "💰  İndirim Doğrulama":
 
     # Ürün bazlı arama
     st.markdown('<div class="section-title">🔍 Ürün Bazlı İndirim Sorgula</div>', unsafe_allow_html=True)
-    discount_names = filtered.set_index("product_id")["name"].to_dict()
-    selected_d = st.selectbox(
-        "🔍 Ürün ara...",
-        options=[None] + list(discount_names.keys()),
-        format_func=lambda x: "Ürün seçmek için yazın..." if x is None else discount_names.get(x, x),
-        key="discount_select",
-        label_visibility="collapsed"
-    )
+    dq = st.text_input("🔍 Ürün Ara", placeholder="Ürün adı yazın...", label_visibility="collapsed", key="disc_search")
+    dmatches = filtered[filtered["name"].str.contains(dq, case=False, na=False)] if dq else pd.DataFrame()
+    selected_d = None
+    if dq and len(dmatches) > 0:
+        dname_list = dmatches["name"].tolist()
+        dpid_list = dmatches["product_id"].tolist()
+        selected_d = dpid_list[dname_list.index(st.selectbox("", dname_list, label_visibility="collapsed", key="disc_select"))]
 
     if selected_d:
         prod_d = filtered[filtered["product_id"] == selected_d].iloc[0]
@@ -272,14 +271,13 @@ elif page == "🏪  Satıcı Güven":
 
     # Satıcı arama
     st.markdown('<div class="section-title">🔍 Satıcı Bazlı Analiz</div>', unsafe_allow_html=True)
-    seller_names = seller_df.set_index("seller_id")["name"].to_dict()
-    selected_s = st.selectbox(
-        "🔍 Satıcı ara...",
-        options=[None] + list(seller_names.keys()),
-        format_func=lambda x: "Satıcı seçmek için yazın..." if x is None else seller_names.get(x, x),
-        key="seller_select",
-        label_visibility="collapsed"
-    )
+    sq = st.text_input("🔍 Satıcı Ara", placeholder="Satıcı adı yazın (örn: TechStore)...", label_visibility="collapsed", key="seller_search")
+    smatches = seller_df[seller_df["name"].str.contains(sq, case=False, na=False)] if sq else pd.DataFrame()
+    selected_s = None
+    if sq and len(smatches) > 0:
+        sname_list = smatches["name"].tolist()
+        sid_list = smatches["seller_id"].tolist()
+        selected_s = sid_list[sname_list.index(st.selectbox("", sname_list, label_visibility="collapsed", key="seller_select"))]
 
     if selected_s:
         s = seller_df[seller_df["seller_id"] == selected_s].iloc[0]
