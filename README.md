@@ -30,47 +30,39 @@
 
 ## 📁 Project Structure
 
-\`\`\`
-TrendAnalyzer/
-├── app.py                  # Main Streamlit application
-├── analysis.py             # Core analysis engine
-├── requirements.txt
-├── Dockerfile
-├── data/
-│   ├── generate_data.py    # Synthetic data generator
-│   ├── products.csv
-│   ├── sellers.csv
-│   ├── reviews.csv
-│   └── prices.csv
-├── tests/
-│   └── test_analysis.py    # 22 unit tests — 88% coverage
-└── .github/workflows/
-    └── ci.yml              # CI pipeline (lint → test → coverage gate)
-\`\`\`
+    TrendAnalyzer/
+    ├── app.py                  # Main Streamlit application
+    ├── analysis.py             # Core analysis engine
+    ├── requirements.txt
+    ├── Dockerfile
+    ├── data/
+    │   ├── generate_data.py    # Synthetic data generator
+    │   ├── products.csv
+    │   ├── sellers.csv
+    │   ├── reviews.csv
+    │   └── prices.csv
+    ├── tests/
+    │   └── test_analysis.py    # 22 unit tests — 88% coverage
+    └── .github/workflows/
+        └── ci.yml              # CI pipeline (lint → test → coverage gate)
 
 ## ⚙️ Local Setup
 
-\`\`\`bash
-git clone https://github.com/denizdost/TrendAnalyzer.git
-cd TrendAnalyzer
-pip install -r requirements.txt
-python data/generate_data.py
-streamlit run app.py
-\`\`\`
+    git clone https://github.com/denizdost/TrendAnalyzer.git
+    cd TrendAnalyzer
+    pip install -r requirements.txt
+    python data/generate_data.py
+    streamlit run app.py
 
 ## 🐳 Docker
 
-\`\`\`bash
-docker build -t trendanalyzer .
-docker run -p 8501:8501 trendanalyzer
-\`\`\`
+    docker build -t trendanalyzer .
+    docker run -p 8501:8501 trendanalyzer
 
 ## 🧪 Running Tests
 
-\`\`\`bash
-python -m coverage run -m unittest tests/test_analysis.py
-python -m coverage report --include=analysis.py
-\`\`\`
+    python -m coverage run -m unittest tests/test_analysis.py
+    python -m coverage report --include=analysis.py
 
 ## ✨ Features
 
