@@ -1,6 +1,6 @@
 # 📊 TrendAnalyzer
 
-> A data-driven dashboard for analyzing Trendyol e-commerce products — scoring performance, detecting fake discounts, evaluating seller trustworthiness, and analyzing customer sentiment.
+> A data-driven dashboard for analyzing Trendyol e-commerce products — scoring performance, detecting fake discounts, evaluating seller trustworthiness, and analyzing customer sentiment using real ML models.
 
 [![CI Pipeline](https://github.com/denizdost/TrendAnalyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/denizdost/TrendAnalyzer/actions)
 
@@ -23,6 +23,8 @@
 - **Frontend:** Streamlit
 - **Data Processing:** Pandas, NumPy
 - **Visualization:** Plotly
+- **ML — Clustering:** scikit-learn (KMeans)
+- **ML — Sentiment:** Rule-based Turkish NLP + BERT (savasy/bert-base-turkish-sentiment-cased)
 - **Testing:** unittest, coverage.py
 - **CI/CD:** GitHub Actions
 - **Deployment:** Streamlit Cloud
@@ -31,13 +33,14 @@
 
     TrendAnalyzer/
     ├── app.py                  # Main Streamlit application (5 pages)
-    ├── analysis.py             # Core analysis engine
+    ├── analysis.py             # Core analysis engine (KMeans, sentiment, scoring)
     ├── requirements.txt
+    ├── Dockerfile
     ├── data/
     │   ├── generate_data.py    # Synthetic Trendyol dataset generator
     │   ├── products.csv        # 200 products across 8 categories
     │   ├── sellers.csv         # 12 sellers with ratings
-    │   ├── reviews.csv         # Customer reviews with sentiment labels
+    │   ├── reviews.csv         # Turkish customer reviews with sentiment labels
     │   └── prices.csv          # 12-month price history per product
     ├── tests/
     │   └── test_analysis.py    # 22 unit tests — 88% coverage
@@ -47,19 +50,33 @@
 ## 📄 Pages & Features
 
 ### 🏠 Dashboard
-The landing page provides a market-wide overview of all products. Four KPI cards show total product count, Best Buy products, percentage of misleading discounts, and average performance score. A horizontal bar chart compares average prices across categories, and a donut chart shows product distribution by cluster label (Best Buy, Fair Value, Overpriced). A top-10 table ranks products by performance score.
+Market-wide overview with four KPI cards (total products, Best Buy count, misleading discount rate, average performance score). Horizontal bar chart compares average prices across categories. Donut chart shows product distribution by KMeans cluster label. Top-10 table with CSV export.
 
 ### 🔍 Product Detail
-Search and select any product from a searchable dropdown. The page shows price, rating, performance score, and cluster label. A 12-month price history line chart reveals pricing trends. A sentiment bar chart breaks down reviews into Positive, Neutral, and Negative with a verdict. Discount authenticity is also shown for the selected product.
+Searchable product dropdown. Shows price, rating, performance score, and KMeans cluster label with the three features used. 12-month price history chart. Review sentiment breakdown with verdict. Live BERT sentiment analyzer — type any Turkish review and get real-time classification from both rule-based and BERT models side by side. Discount authenticity check.
 
 ### 💰 Discount Verification
-Exposes misleading discounts by comparing claimed vs. real discount rates. Search for a specific product to see its exact breakdown and verdict. A scatter plot visualizes all products (green = genuine, red = fake). A bar chart shows which categories have the highest rate of misleading discounts.
+Detects misleading discounts by comparing claimed vs. real discount rates. Search for a specific product to see exact breakdown and verdict. Scatter plot (green = genuine, red = fake). Bar chart of misleading discount rates by category.
 
 ### 🏪 Seller Trust
-Evaluates seller trustworthiness based on rating and positive review rate. Search for a seller to see their trust score, total sales, positive review percentage, and their product list. A scatter chart plots sellers by rating vs. positive review rate, color-coded by trust label. A ranked bar chart shows the top 10 sellers.
+Evaluates sellers based on rating and positive review rate combined into a trust score. Search for a seller to see their metrics and full product list. Scatter plot and top 10 ranking.
 
 ### 📈 Category Statistics
-Statistical analysis at the category level. Two bar charts compare average prices (with standard deviation) and average ratings across all 8 categories. A summary table shows mean, median, standard deviation, average rating, and product count per category.
+Statistical analysis per category: average price with standard deviation, average rating, product count.
+
+## 🤖 ML Pipeline
+
+### KMeans Clustering
+Products clustered into 3 segments using sklearn KMeans with StandardScaler normalization on: discounted price, performance score, and review count. Labels: Best Buy, Fair Value, Overpriced.
+
+### Sentiment Analysis
+Two-layer approach: rule-based Turkish keyword analysis (~90% accuracy) for batch processing, and BERT (savasy/bert-base-turkish-sentiment-cased) for live user input analysis.
+
+### Performance Scoring
+0-100 score: product rating (40pts) + log-scaled review count (30pts) + seller trust (30pts).
+
+### Discount Verification
+A gap above 15% between claimed and real discount flags it as misleading.
 
 ## ⚙️ Local Setup
 
@@ -73,11 +90,3 @@ Statistical analysis at the category level. Two bar charts compare average price
 
     python -m coverage run -m unittest tests/test_analysis.py
     python -m coverage report --include=analysis.py
-
-## 🔬 Analysis Engine
-
-- **Performance Scoring** — Combines product rating (40pts), review count log-scaled (30pts), and seller trust (30pts) into a 0-100 score.
-- **Discount Verification** — A gap above 15% between claimed and real discount flags it as misleading.
-- **Seller Trust** — Combines seller rating (60%) and positive review rate (40%) into a trust score.
-- **Sentiment Analysis** — Classifies reviews as Positive, Negative, or Neutral per product.
-- **Category Statistics** — Mean, median, and standard deviation of prices and ratings per category.
