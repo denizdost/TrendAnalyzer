@@ -496,7 +496,8 @@ with tab2:
 
                 # Rule-based result (instant)
                 from analysis import analyze_sentiment
-                rule_verdict = analyze_sentiment(user_review)
+                _raw = analyze_sentiment(user_review)
+                rule_verdict = {"Pozitif": "Positive", "Negatif": "Negative", "Nötr": "Neutral"}.get(_raw, _raw)
                 rule_emoji = "😊" if rule_verdict == "Positive" else "😞" if rule_verdict == "Negative" else "😐"
                 rule_color = "#052e16" if rule_verdict == "Positive" else "#1c0505" if rule_verdict == "Negative" else "#1c1100"
                 rule_tc = "#4ade80" if rule_verdict == "Positive" else "#f87171" if rule_verdict == "Negative" else "#facc15"
