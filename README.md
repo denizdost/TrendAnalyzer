@@ -6,7 +6,7 @@
 
 ## 🚀 Live Demo
 
-**[https://trendanalyzer.streamlit.app](https://trendanalyzer.streamlit.app)**
+**[https://trendanalyzer-0.streamlit.app](https://trendanalyzer-0.streamlit.app)**
 
 ## 👥 Team — StarAI
 
