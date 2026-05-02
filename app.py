@@ -113,8 +113,11 @@ elif page == "🔍  Ürün Detay":
 
     all_names = filtered["name"].tolist()
     all_pids  = filtered["product_id"].tolist()
-    chosen_name = st.selectbox("🔍 Ürün seç veya ara", all_names, key="prod_select")
-    selected_pid = all_pids[all_names.index(chosen_name)]
+    chosen_name = st.selectbox("🔍 Ürün seç veya ara",
+        [None] + all_names,
+        format_func=lambda x: "— Ürün giriniz —" if x is None else x,
+        key="prod_select")
+    selected_pid = all_pids[all_names.index(chosen_name)] if chosen_name else None
 
     if selected_pid:
         prod = filtered[filtered["product_id"] == selected_pid].iloc[0]
@@ -200,7 +203,7 @@ elif page == "💰  İndirim Doğrulama":
     disc_names = filtered["name"].tolist()
     disc_pids  = filtered["product_id"].tolist()
     disc_chosen = st.selectbox("🔍 Ürün seç veya ara", [None] + disc_names,
-        format_func=lambda x: "— Ürün seçin —" if x is None else x, key="disc_select")
+        format_func=lambda x: "— Ürün giriniz —" if x is None else x, key="disc_select")
     selected_d = disc_pids[disc_names.index(disc_chosen)] if disc_chosen else None
 
     if selected_d:
@@ -266,7 +269,7 @@ elif page == "🏪  Satıcı Güven":
     s_names = seller_df["name"].tolist()
     s_ids   = seller_df["seller_id"].tolist()
     s_chosen = st.selectbox("🔍 Satıcı seç veya ara", [None] + s_names,
-        format_func=lambda x: "— Satıcı seçin —" if x is None else x, key="seller_select")
+        format_func=lambda x: "— Satıcı giriniz —" if x is None else x, key="seller_select")
     selected_s = s_ids[s_names.index(s_chosen)] if s_chosen else None
 
     if selected_s:
