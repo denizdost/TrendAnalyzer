@@ -57,7 +57,7 @@ def metric_card(label, value, color="orange"):
 
 # Sidebar
 with st.sidebar:
-    st.markdown('<div style="padding:1rem 0 1.5rem 0;"><div style="font-family:Syne,sans-serif;font-size:1.3rem;font-weight:800;color:#ff6b35;">📊 TrendAnalyzer</div><div style="font-size:0.72rem;color:#444;margin-top:2px;">Trendyol Ürün Analizi</div></div>', unsafe_allow_html=True)
+    st.markdown('<div style="padding:1rem 0 1.5rem 0;"><div style="font-family:Syne,sans-serif;font-size:clamp(0.9rem,1.8vw,1.3rem);font-weight:800;color:#ff6b35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📊 TrendAnalyzer</div><div style="font-size:0.72rem;color:#444;margin-top:2px;white-space:nowrap;">Trendyol Ürün Analizi</div></div>', unsafe_allow_html=True)
     page = st.radio("Nav", ["🏠  Dashboard", "🔍  Ürün Detay", "💰  İndirim Doğrulama", "🏪  Satıcı Güven", "📈  Kategori İstatistikleri"], label_visibility="collapsed")
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown('<div style="font-size:0.72rem;color:#444;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Filtreler</div>', unsafe_allow_html=True)
