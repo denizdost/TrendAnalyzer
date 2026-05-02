@@ -179,6 +179,46 @@ with tab2:
                 st.markdown(f'<div style="background:{color};border-radius:8px;padding:0.8rem 1.2rem;margin-top:0.5rem;color:{tc};font-weight:600;font-size:0.9rem;">{verdict}</div>', unsafe_allow_html=True)
 
         st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown('<div class="section-title">🔵 KMeans Cluster Analizi</div>', unsafe_allow_html=True)
+        
+        cluster_color = "#052e16" if prod["cluster_label"] == "🏆 Best Buy" else "#1c1100" if prod["cluster_label"] == "✅ Fair Value" else "#1c0505"
+        cluster_tc = "#4ade80" if prod["cluster_label"] == "🏆 Best Buy" else "#facc15" if prod["cluster_label"] == "✅ Fair Value" else "#f87171"
+        
+        kc1, kc2, kc3, kc4 = st.columns(4)
+        with kc1:
+            st.markdown(f'''
+            <div class="metric-card">
+                <div class="metric-label">Fiyat (Feature 1)</div>
+                <div class="metric-value orange">₺{prod["discounted_price"]:,.0f}</div>
+            </div>''', unsafe_allow_html=True)
+        with kc2:
+            st.markdown(f'''
+            <div class="metric-card">
+                <div class="metric-label">Performans Skoru (Feature 2)</div>
+                <div class="metric-value green">{prod["performance_score"]}</div>
+            </div>''', unsafe_allow_html=True)
+        with kc3:
+            st.markdown(f'''
+            <div class="metric-card">
+                <div class="metric-label">Yorum Sayısı (Feature 3)</div>
+                <div class="metric-value blue">{prod["review_count"]:,}</div>
+            </div>''', unsafe_allow_html=True)
+        with kc4:
+            st.markdown(f'''
+            <div style="background:{cluster_color};border-radius:12px;padding:1.2rem 1.4rem;margin-bottom:0.5rem;">
+                <div class="metric-label" style="color:{cluster_tc};opacity:0.7;">KMeans Sonucu</div>
+                <div style="font-family:Syne,sans-serif;font-size:1.3rem;font-weight:700;color:{cluster_tc};">{prod["cluster_label"]}</div>
+            </div>''', unsafe_allow_html=True)
+
+        st.markdown(f'''
+        <div style="background:#161616;border:1px solid #222;border-radius:10px;padding:0.8rem 1.2rem;margin-bottom:1rem;font-size:0.8rem;color:#555;">
+            🤖 <span style="color:#888;">KMeans (k=3) algoritması bu ürünü fiyat, performans skoru ve yorum sayısı özelliklerine göre 
+            StandardScaler ile normalize ederek <span style="color:{cluster_tc};font-weight:600;">{prod["cluster_label"]}</span> 
+            kümesine atadı.</span>
+        </div>
+        ''', unsafe_allow_html=True)
+
+        st.markdown("<hr>", unsafe_allow_html=True)
         st.markdown('<div class="section-title">💰 İndirim Analizi</div>', unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
         with col1: metric_card("İddia Edilen İndirim", f"%{prod['claimed_discount_rate']*100:.0f}", "orange")
