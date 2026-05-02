@@ -304,19 +304,23 @@ elif page == "🏪  Satıcı Güven":
     # Genel grafikler
     col_l, col_r = st.columns(2)
     with col_l:
-        st.markdown('<div class="section-title">Satıcı Güven Skoru Dağılımı</div>', unsafe_allow_html=True)
-        seller_sorted = seller_df.sort_values("trust_score", ascending=True)
-        colors = seller_sorted["trust_label"].map({"🟢 Güvenilir":"#4ade80","🟡 Orta":"#facc15","🔴 Riskli":"#f87171"})
-        fig = go.Figure(go.Bar(
-            x=seller_sorted["trust_score"],
-            y=seller_sorted["name"],
-            orientation="h",
-            marker=dict(color=colors, opacity=0.85),
-            text=seller_sorted["trust_label"],
-            textposition="inside",
-            insidetextanchor="middle",
-        ))
-        fig.update_layout(**PLOTLY_THEME, height=340, xaxis_title="Güven Skoru", xaxis_range=[0,100])
+        st.markdown('<div class="section-title">Puan vs Pozitif Yorum Oranı</div>', unsafe_allow_html=True)
+        colors = seller_df["trust_label"].map({"🟢 Güvenilir":"#4ade80","🟡 Orta":"#facc15","🔴 Riskli":"#f87171"})
+        fig = go.Figure()
+        for label, color in [("🟢 Güvenilir","#4ade80"),("🟡 Orta","#facc15"),("🔴 Riskli","#f87171")]:
+            sub = seller_df[seller_df["trust_label"]==label]
+            if len(sub) == 0: continue
+            fig.add_trace(go.Scatter(
+                x=sub["rating"], y=sub["positive_rate"],
+                mode="markers",
+                name=label,
+                marker=dict(color=color, size=12, opacity=0.85, line=dict(width=1, color="#0d0d0d")),
+                customdata=sub[["name","trust_score"]].values,
+                hovertemplate="<b>%{customdata[0]}</b><br>Puan: %{x}<br>Pozitif Yorum: %{y:.1f}%<br>Güven Skoru: %{customdata[1]}<extra></extra>"
+            ))
+        fig.update_layout(**PLOTLY_THEME, height=340,
+            xaxis_title="Satıcı Puanı", yaxis_title="Pozitif Yorum (%)",
+            legend=dict(font=dict(color="#888", size=10), bgcolor="rgba(0,0,0,0)"))
         st.plotly_chart(fig, use_container_width=True)
 
     with col_r:
