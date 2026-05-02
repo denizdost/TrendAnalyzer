@@ -58,17 +58,7 @@ def metric_card(label, value, color="orange"):
 # Header
 st.markdown('<div style="font-family:Syne,sans-serif;font-size:1.4rem;font-weight:800;color:#ff6b35;padding-bottom:0.8rem;white-space:nowrap;">📊 TrendAnalyzer</div>', unsafe_allow_html=True)
 
-# Filters
-fc1, fc2 = st.columns([2, 4])
-with fc1:
-    selected_cats = st.multiselect("k", options=sorted(df["category"].unique()), default=[], placeholder="Kategori filtrele...", label_visibility="collapsed")
-with fc2:
-    price_range = st.slider("f", 0, int(df["discounted_price"].max()), (0, int(df["discounted_price"].max())), label_visibility="collapsed")
-
 filtered = df.copy()
-if selected_cats:
-    filtered = filtered[filtered["category"].isin(selected_cats)]
-filtered = filtered[(filtered["discounted_price"] >= price_range[0]) & (filtered["discounted_price"] <= price_range[1])]
 
 st.markdown("<hr style='margin:0.5rem 0 0 0;'>", unsafe_allow_html=True)
 
