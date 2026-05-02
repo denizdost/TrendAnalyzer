@@ -111,83 +111,80 @@ elif page == "🔍  Ürün Detay":
     st.markdown('<div class="page-title">Ürün Detay Analizi</div>', unsafe_allow_html=True)
     st.markdown('<div class="page-subtitle">Ürün bazlı fiyat geçmişi ve yorum sentiment analizi</div>', unsafe_allow_html=True)
 
-    # Search bar
-    search_query = st.text_input("🔍 Ürün ara...", placeholder="Ürün adı yazın (örn: Elektronik, Spor...)")
-    if search_query:
-        search_results = filtered[filtered["name"].str.contains(search_query, case=False, na=False)]
-    else:
-        search_results = filtered
+    # Search bar - single searchable selectbox
+    all_names = filtered.set_index("product_id")["name"].to_dict()
+    selected_pid = st.selectbox(
+        "🔍 Ürün ara...",
+        options=list(all_names.keys()),
+        format_func=lambda x: all_names.get(x, x),
+        index=0,
+        placeholder="Ürün adı yazın...",
+        label_visibility="collapsed"
+    )
 
-    if len(search_results) == 0:
-        st.warning("Aramanızla eşleşen ürün bulunamadı.")
-    else:
-        product_options = search_results["product_id"].tolist()
-        product_names = search_results.set_index("product_id")["name"].to_dict()
-        selected_pid = st.selectbox("Ürün seçin", product_options, format_func=lambda x: product_names.get(x, x))
+    if selected_pid:
+        prod = filtered[filtered["product_id"] == selected_pid].iloc[0]
 
-        if selected_pid:
-            prod = filtered[filtered["product_id"] == selected_pid].iloc[0]
+        col1, col2, col3, col4 = st.columns(4)
+        with col1: metric_card("Fiyat", f"₺{prod['discounted_price']:,.0f}", "orange")
+        with col2: metric_card("Puan", f"{prod['rating']} ⭐", "yellow")
+        with col3: metric_card("Performans Skoru", f"{prod['performance_score']}", "green")
+        with col4: metric_card("Etiket", prod['cluster_label'], "blue")
 
-            col1, col2, col3, col4 = st.columns(4)
-            with col1: metric_card("Fiyat", f"₺{prod['discounted_price']:,.0f}", "orange")
-            with col2: metric_card("Puan", f"{prod['rating']} ⭐", "yellow")
-            with col3: metric_card("Performans Skoru", f"{prod['performance_score']}", "green")
-            with col4: metric_card("Etiket", prod['cluster_label'], "blue")
+        st.markdown("<hr>", unsafe_allow_html=True)
+        col_l, col_r = st.columns(2)
 
-            st.markdown("<hr>", unsafe_allow_html=True)
-            col_l, col_r = st.columns(2)
+        with col_l:
+            st.markdown('<div class="section-title">📈 12 Aylık Fiyat Geçmişi</div>', unsafe_allow_html=True)
+            ph = price_history(prices_df, selected_pid)
+            fig = go.Figure(go.Scatter(
+                x=ph["month"], y=ph["price"], mode="lines+markers",
+                line=dict(color="#ff6b35", width=2), marker=dict(size=6, color="#ff6b35"),
+                fill="tozeroy", fillcolor="rgba(255,107,53,0.08)"
+            ))
+            fig.update_layout(**PLOTLY_THEME, height=280)
+            fig.update_xaxes(tickvals=list(range(1, 13)), ticktext=["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"])
+            st.plotly_chart(fig, use_container_width=True)
 
-            with col_l:
-                st.markdown('<div class="section-title">📈 12 Aylık Fiyat Geçmişi</div>', unsafe_allow_html=True)
-                ph = price_history(prices_df, selected_pid)
-                fig = go.Figure(go.Scatter(
-                    x=ph["month"], y=ph["price"], mode="lines+markers",
-                    line=dict(color="#ff6b35", width=2), marker=dict(size=6, color="#ff6b35"),
-                    fill="tozeroy", fillcolor="rgba(255,107,53,0.08)"
+        with col_r:
+            st.markdown('<div class="section-title">💬 Yorum Sentiment Analizi</div>', unsafe_allow_html=True)
+            sentiment_counts, total_reviews = product_sentiment_summary(reviews_df, selected_pid)
+            metric_card("Toplam Yorum", f"{total_reviews}", "orange")
+
+            if total_reviews > 0:
+                pos = sentiment_counts["Pozitif"]
+                neg = sentiment_counts["Negatif"]
+                neu = sentiment_counts["Nötr"]
+                pos_pct = pos / total_reviews * 100
+                neg_pct = neg / total_reviews * 100
+                neu_pct = neu / total_reviews * 100
+
+                fig2 = go.Figure(go.Bar(
+                    x=[pos_pct, neu_pct, neg_pct],
+                    y=["😊 Pozitif", "😐 Nötr", "😞 Negatif"],
+                    orientation="h",
+                    marker=dict(color=["#4ade80", "#60a5fa", "#f87171"]),
+                    text=[f"%{pos_pct:.0f} ({pos})", f"%{neu_pct:.0f} ({neu})", f"%{neg_pct:.0f} ({neg})"],
+                    textposition="inside",
                 ))
-                fig.update_layout(**PLOTLY_THEME, height=280)
-                fig.update_xaxes(tickvals=list(range(1, 13)), ticktext=["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"])
-                st.plotly_chart(fig, use_container_width=True)
+                fig2.update_layout(**PLOTLY_THEME, height=200)
+                fig2.update_xaxes(range=[0, 100])
+                st.plotly_chart(fig2, use_container_width=True)
 
-            with col_r:
-                st.markdown('<div class="section-title">💬 Yorum Sentiment Analizi</div>', unsafe_allow_html=True)
-                sentiment_counts, total_reviews = product_sentiment_summary(reviews_df, selected_pid)
-                metric_card("Toplam Yorum", f"{total_reviews}", "orange")
+                if pos_pct >= 60:
+                    verdict, color, tc = "🟢 Müşteriler genel olarak memnun", "#052e16", "#4ade80"
+                elif neg_pct >= 40:
+                    verdict, color, tc = "🔴 Dikkat: Yüksek negatif yorum oranı", "#1c0505", "#f87171"
+                else:
+                    verdict, color, tc = "🟡 Karışık yorumlar", "#1c1100", "#facc15"
+                st.markdown(f'<div style="background:{color};border-radius:8px;padding:0.8rem 1.2rem;margin-top:0.5rem;color:{tc};font-weight:600;font-size:0.9rem;">{verdict}</div>', unsafe_allow_html=True)
 
-                if total_reviews > 0:
-                    pos = sentiment_counts["Pozitif"]
-                    neg = sentiment_counts["Negatif"]
-                    neu = sentiment_counts["Nötr"]
-                    pos_pct = pos / total_reviews * 100
-                    neg_pct = neg / total_reviews * 100
-                    neu_pct = neu / total_reviews * 100
-
-                    fig2 = go.Figure(go.Bar(
-                        x=[pos_pct, neu_pct, neg_pct],
-                        y=["😊 Pozitif", "😐 Nötr", "😞 Negatif"],
-                        orientation="h",
-                        marker=dict(color=["#4ade80", "#60a5fa", "#f87171"]),
-                        text=[f"%{pos_pct:.0f} ({pos})", f"%{neu_pct:.0f} ({neu})", f"%{neg_pct:.0f} ({neg})"],
-                        textposition="inside",
-                    ))
-                    fig2.update_layout(**PLOTLY_THEME, height=200)
-                    fig2.update_xaxes(range=[0, 100])
-                    st.plotly_chart(fig2, use_container_width=True)
-
-                    if pos_pct >= 60:
-                        verdict, color, tc = "🟢 Müşteriler genel olarak memnun", "#052e16", "#4ade80"
-                    elif neg_pct >= 40:
-                        verdict, color, tc = "🔴 Dikkat: Yüksek negatif yorum oranı", "#1c0505", "#f87171"
-                    else:
-                        verdict, color, tc = "🟡 Karışık yorumlar", "#1c1100", "#facc15"
-                    st.markdown(f'<div style="background:{color};border-radius:8px;padding:0.8rem 1.2rem;margin-top:0.5rem;color:{tc};font-weight:600;font-size:0.9rem;">{verdict}</div>', unsafe_allow_html=True)
-
-            st.markdown("<hr>", unsafe_allow_html=True)
-            st.markdown('<div class="section-title">💰 İndirim Analizi</div>', unsafe_allow_html=True)
-            col1, col2, col3 = st.columns(3)
-            with col1: metric_card("İddia Edilen İndirim", f"%{prod['claimed_discount_rate']*100:.0f}", "orange")
-            with col2: metric_card("Gerçek İndirim", f"%{prod['real_discount_rate']*100:.0f}", "green")
-            with col3: metric_card("Sonuç", prod['discount_verdict'], "blue")
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown('<div class="section-title">💰 İndirim Analizi</div>', unsafe_allow_html=True)
+        col1, col2, col3 = st.columns(3)
+        with col1: metric_card("İddia Edilen İndirim", f"%{prod['claimed_discount_rate']*100:.0f}", "orange")
+        with col2: metric_card("Gerçek İndirim", f"%{prod['real_discount_rate']*100:.0f}", "green")
+        with col3: metric_card("Sonuç", prod['discount_verdict'], "blue")
 
 # ── İNDİRİM DOĞRULAMA ─────────────────────────────────────────────────────────
 elif page == "💰  İndirim Doğrulama":
@@ -206,15 +203,16 @@ elif page == "💰  İndirim Doğrulama":
 
     # Ürün bazlı arama
     st.markdown('<div class="section-title">🔍 Ürün Bazlı İndirim Sorgula</div>', unsafe_allow_html=True)
-    discount_search = st.text_input("Ürün ara...", placeholder="Ürün adı yazın", key="discount_search")
-    if discount_search:
-        discount_results = filtered[filtered["name"].str.contains(discount_search, case=False, na=False)]
-    else:
-        discount_results = filtered
+    discount_names = filtered.set_index("product_id")["name"].to_dict()
+    selected_d = st.selectbox(
+        "🔍 Ürün ara...",
+        options=[None] + list(discount_names.keys()),
+        format_func=lambda x: "Ürün seçmek için yazın..." if x is None else discount_names.get(x, x),
+        key="discount_select",
+        label_visibility="collapsed"
+    )
 
-    if discount_search and len(discount_results) > 0:
-        selected_d = st.selectbox("Ürün seçin", discount_results["product_id"].tolist(),
-            format_func=lambda x: discount_results.set_index("product_id")["name"].to_dict().get(x, x), key="discount_select")
+    if selected_d:
         prod_d = filtered[filtered["product_id"] == selected_d].iloc[0]
         col1, col2, col3, col4 = st.columns(4)
         with col1: metric_card("Şişirilmiş Fiyat", f"₺{prod_d['inflated_price']:,.0f}", "orange")
@@ -274,15 +272,17 @@ elif page == "🏪  Satıcı Güven":
 
     # Satıcı arama
     st.markdown('<div class="section-title">🔍 Satıcı Bazlı Analiz</div>', unsafe_allow_html=True)
-    seller_search = st.text_input("Satıcı ara...", placeholder="Satıcı adı yazın (örn: TechStore, ModaMart...)", key="seller_search")
-    if seller_search:
-        seller_results = seller_df[seller_df["name"].str.contains(seller_search, case=False, na=False)]
-    else:
-        seller_results = pd.DataFrame()
+    seller_names = seller_df.set_index("seller_id")["name"].to_dict()
+    selected_s = st.selectbox(
+        "🔍 Satıcı ara...",
+        options=[None] + list(seller_names.keys()),
+        format_func=lambda x: "Satıcı seçmek için yazın..." if x is None else seller_names.get(x, x),
+        key="seller_select",
+        label_visibility="collapsed"
+    )
 
-    if seller_search and len(seller_results) > 0:
-        selected_s = st.selectbox("Satıcı seçin", seller_results["seller_id"].tolist(),
-            format_func=lambda x: seller_results.set_index("seller_id")["name"].to_dict().get(x, x), key="seller_select")
+    if selected_s:
+        s = seller_df[seller_df["seller_id"] == selected_s].iloc[0]
         s = seller_results[seller_results["seller_id"] == selected_s].iloc[0]
 
         col1, col2, col3, col4 = st.columns(4)
@@ -309,8 +309,6 @@ elif page == "🏪  Satıcı Güven":
             st.markdown(f'<div style="background:#1c0505;border-radius:8px;padding:1rem 1.4rem;color:#f87171;font-weight:600;">{s["trust_label"]} — Bu satıcıyla işlem yapmadan önce dikkatli değerlendirin.</div>', unsafe_allow_html=True)
 
         st.markdown("<hr>", unsafe_allow_html=True)
-    elif seller_search:
-        st.warning("Aramanızla eşleşen satıcı bulunamadı.")
 
     # Genel grafikler
     col_l, col_r = st.columns(2)
