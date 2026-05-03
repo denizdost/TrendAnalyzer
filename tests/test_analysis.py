@@ -6,8 +6,8 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from analysis import (
-    preprocess, calculate_performance_score, verify_discount,
-    seller_trust_analysis, category_statistics, price_history,
+    preprocess, calculate_performance_score, apply_kmeans_clustering,
+    verify_discount, seller_trust_analysis, category_statistics, price_history,
     DISCOUNT_FAKE_THRESHOLD, BEST_BUY_SCORE_THRESHOLD, FAIR_SCORE_THRESHOLD
 )
 
@@ -91,11 +91,13 @@ class TestPerformanceScore(unittest.TestCase):
         self.assertTrue((result["performance_score"] <= 100).all())
 
     def test_cluster_label_exists(self):
-        result = calculate_performance_score(self.products, self.sellers)
+        scored = calculate_performance_score(self.products, self.sellers)
+        result = apply_kmeans_clustering(scored)
         self.assertIn("cluster_label", result.columns)
 
     def test_cluster_label_values(self):
-        result = calculate_performance_score(self.products, self.sellers)
+        scored = calculate_performance_score(self.products, self.sellers)
+        result = apply_kmeans_clustering(scored)
         valid_labels = {"🏆 Best Buy", "✅ Fair Value", "⚠️ Overpriced"}
         self.assertTrue(set(result["cluster_label"].unique()).issubset(valid_labels))
 
@@ -150,7 +152,7 @@ class TestSellerTrust(unittest.TestCase):
 
     def test_trust_label_values(self):
         result = seller_trust_analysis(make_sellers(), make_reviews())
-        valid = {"🟢 Güvenilir", "🟡 Orta", "🔴 Riskli"}
+        valid = {"🟢 Reliable", "🟡 Average", "🔴 Risky"}
         self.assertTrue(set(result["trust_label"].unique()).issubset(valid))
 
     def test_trust_score_range(self):
