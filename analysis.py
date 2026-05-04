@@ -131,9 +131,12 @@ class ScoringEngine:
             (merged["rating"] / 5.0) * 60 +
             (merged["positive_rate"] / 100) * 40
         ).round(1)
+
         def trust_label(score):
-            if score >= 75: return "🟢 Reliable"
-            elif score >= 50: return "🟡 Average"
+            if score >= 75:
+                return "🟢 Reliable"
+            elif score >= 50:
+                return "🟡 Average"
             return "🔴 Risky"
         merged["trust_label"] = merged["trust_score"].apply(trust_label)
         return merged
@@ -169,9 +172,12 @@ class ClusteringEngine:
         sorted_clusters = centroids["performance_score"].rank(ascending=False)
         label_map = {}
         for cluster_id, rank in sorted_clusters.items():
-            if rank == 1: label_map[cluster_id] = "🏆 Best Buy"
-            elif rank == 2: label_map[cluster_id] = "✅ Fair Value"
-            else: label_map[cluster_id] = "⚠️ Overpriced"
+            if rank == 1:
+                label_map[cluster_id] = "🏆 Best Buy"
+            elif rank == 2:
+                label_map[cluster_id] = "✅ Fair Value"
+            else:
+                label_map[cluster_id] = "⚠️ Overpriced"
         df["cluster_label"] = df["cluster"].map(label_map)
         return df
 
@@ -180,32 +186,42 @@ class ClusteringEngine:
 def load_data():
     return DataLoader().load()
 
+
 def preprocess(products, sellers):
     return DataCleaner().clean(products, sellers)
+
 
 def calculate_performance_score(products, sellers):
     return ScoringEngine().calculate_performance_score(products, sellers)
 
+
 def apply_kmeans_clustering(scored):
     return ClusteringEngine().fit_predict(scored)
+
 
 def apply_sentiment_to_reviews(reviews):
     return SentimentAnalyzer().analyze_batch(reviews)
 
+
 def verify_discount(products):
     return ScoringEngine().verify_discount(products)
+
 
 def seller_trust_analysis(sellers, reviews):
     return ScoringEngine().seller_trust(sellers, reviews)
 
+
 def category_statistics(products):
     return ScoringEngine().category_statistics(products)
+
 
 def price_history(prices, product_id):
     return prices[prices["product_id"] == product_id].sort_values("month")
 
+
 def product_sentiment_summary(reviews, product_id):
     return SentimentAnalyzer().summarize(reviews, product_id)
+
 
 def analyze_sentiment(text):
     return SentimentAnalyzer().analyze(text)
