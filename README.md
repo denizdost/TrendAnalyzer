@@ -90,3 +90,4 @@ A gap above 15% between claimed and real discount flags it as misleading.
 
     python -m coverage run -m unittest tests/test_analysis.py
     python -m coverage report --include=analysis.py
+# CI trigger
