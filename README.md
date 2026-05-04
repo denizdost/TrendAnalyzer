@@ -47,7 +47,7 @@
     └── .github/workflows/
         └── ci.yml              # CI pipeline: lint → test → coverage gate
 
-## 📄 Pages & Features
+## 📄 Pages & Features:
 
 ### 🏠 Dashboard
 Market-wide overview with four KPI cards (total products, Best Buy count, misleading discount rate, average performance score). Horizontal bar chart compares average prices across categories. Donut chart shows product distribution by KMeans cluster label. Top-10 table with CSV export.
